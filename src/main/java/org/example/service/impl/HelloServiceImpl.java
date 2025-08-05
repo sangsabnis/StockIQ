@@ -1,6 +1,7 @@
 package org.example.service.impl;
-import org.example.service.HelloService;
+
 import com.google.inject.Singleton;
+import org.example.service.HelloService;
 
 /**
  * Implementation of HelloService

@@ -1,8 +1,10 @@
 package org.example.config;
 
-import org.example.service.HelloService;
-import org.example.service.impl.HelloServiceImpl;
 import com.google.inject.AbstractModule;
+import org.example.service.HelloService;
+import org.example.service.StockService;
+import org.example.service.impl.AlphaVantageStockService;
+import org.example.service.impl.HelloServiceImpl;
 
 /**
  * Guice module for dependency injection configuration
@@ -13,6 +15,7 @@ public class AppModule extends AbstractModule {
   protected void configure() {
     // Bind service interfaces to their implementations
     bind(HelloService.class).to(HelloServiceImpl.class);
+    bind(StockService.class).to(AlphaVantageStockService.class);
 
     // Additional bindings can be added here
     // For example:

@@ -1,11 +1,10 @@
 package org.example.service;
 
-import org.example.service.HelloService;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.example.service.impl.HelloServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for HelloService
