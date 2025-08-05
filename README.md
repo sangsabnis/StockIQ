@@ -1,4 +1,123 @@
-# Java Guice Starter Project
+# Java Guice Starter Project with Stock API
+
+A simple Java web application demonstrating dependency injection with Google Guice, built with Maven. Now includes a stock market data API endpoint using Alpha Vantage.
+
+## Features
+
+- **Google Guice** for dependency injection
+- **Maven** for build management
+- **Jetty** embedded web server
+- **Jackson** for JSON processing
+- **SLF4J** for logging
+- **JUnit 5** for testing
+- RESTful "Hello World" endpoint
+- **Stock Market Data API** with Alpha Vantage integration
+- Health check endpoint
+- CORS support for frontend integration
+
+## Project Structure
+
+```
+src/
+├── main/
+│   └── java/
+│       └── com/example/
+│           ├── Application.java              # Main class
+│           ├── config/
+│           │   └── AppModule.java           # Guice DI configuration
+│           ├── model/
+│           │   └── StockInfo.java           # Stock data model
+│           ├── service/
+│           │   ├── HelloService.java        # Service interface
+│           │   ├── StockService.java        # Stock service interface
+│           │   └── impl/
+│           │       ├── HelloServiceImpl.java       # Hello service implementation
+│           │       └── AlphaVantageStockService.java # Stock service implementation
+│           └── servlet/
+│               ├── HelloServlet.java        # Hello HTTP endpoint
+│               └── StockServlet.java        # Stock HTTP endpoint
+└── test/
+    └── java/
+        └── com/example/service/impl/
+            ├── HelloServiceTest.java         # Hello service tests
+            └── AlphaVantageStockServiceTest.java # Stock service tests
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.6 or higher
+- (Optional) Alpha Vantage API key for real stock data
+
+### API Key Setup
+
+1. **Get a free Alpha Vantage API key:**
+   - Visit: https://www.alphavantage.co/support/#api-key
+   - Sign up for a free account
+   - Get your API key
+
+2. **Set the environment variable:**
+   ```bash
+   export ALPHA_VANTAGE_API_KEY=your_api_key_here
+   ```
+
+   **Note:** If no API key is provided, the service will return realistic mock data for testing.
+
+### Running the Application
+
+1. **Build the project:**
+   ```bash
+   mvn clean compile
+   ```
+
+2. **Run tests:**
+   ```bash
+   mvn test
+   ```
+
+3. **Start the application:**
+   ```bash
+   mvn exec:java
+   ```
+
+   The server will start on port 8080 by default.
+
+### Testing the Endpoints
+
+1. **Hello World endpoint:**
+   ```bash
+   curl http://localhost:8080/hello
+   ```
+   Response:
+   ```json
+   {
+     "message": "Hello, World!",
+     "timestamp": 1691234567890,
+     "version": "1.0"
+   }
+   ```
+
+2. **Stock Data endpoint:**
+   ```bash
+   curl "http://localhost:8080/stock?symbol=AAPL"
+   ```
+   Response:
+   ```json
+   {
+     "success": true,
+     "data": {
+       "symbol": "AAPL",
+       "price": 150.25,
+       "open": 148.50,
+       "high": 152.30,
+       "low": 147.80,
+       "volume": 45623100,
+       "previousClose": 149.00,
+       "change": 1.25,
+       "changePercent": 0.84,
+       "lastUpdated": "2024-08-04T10:# Java Guice Starter Project
 
 A simple Java web application demonstrating dependency injection with Google Guice, built with Maven.
 
