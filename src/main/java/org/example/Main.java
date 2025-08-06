@@ -2,15 +2,12 @@ package org.example;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import io.javalin.Javalin;
+import io.javalin.json.JavalinJackson;
+import java.util.Map;
 import org.example.config.AppModule;
-import org.example.servlet.HelloServlet;
-import org.example.servlet.StockServlet;
+import org.example.controller.HelloController;
+import org.example.controller.StockController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Main {
 
-  private static final Logger logger = LoggerFactory.getLogger(Main.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
   private static final int DEFAULT_PORT = 8080;
 
   public static void main(String[] args) {
@@ -30,36 +27,48 @@ public class Main {
       // Get port from environment or use default
       int port = getPort();
 
-      // Create and configure Jetty server
-      Server server = new Server(port);
-      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-      context.setContextPath("/");
-      server.setHandler(context);
+      // Create and configure Javalin app
+      Javalin app = Javalin.create(config -> {
+        // Configure Jackson for JSON serialization
+        config.jsonMapper(new JavalinJackson());
+        
+        // Enable CORS for frontend compatibility
+        config.bundledPlugins.enableCors(cors -> {
+          cors.addRule(it -> {
+            it.anyHost();
+            it.allowCredentials = false;
+          });
+        });
+      });
 
-      // Add servlet with Guice injection
-      HelloServlet helloServlet = injector.getInstance(HelloServlet.class);
-      context.addServlet(new ServletHolder(helloServlet), "/hello");
+      // Get controllers from Guice
+      HelloController helloController = injector.getInstance(HelloController.class);
+      StockController stockController = injector.getInstance(StockController.class);
 
-      // Add stock servlet
-      StockServlet stockServlet = injector.getInstance(StockServlet.class);
-      context.addServlet(new ServletHolder(stockServlet), "/stock");
+      // Define routes
+      app.get("/hello", helloController::getHello);
 
-      // Add health check endpoint
-      context.addServlet(new ServletHolder(new HealthServlet()), "/health");
+      app.get("/stock-info", stockController::getStock);
+      app.post("/stock", stockController::postStock);
+
+      // Health check endpoint
+      app.get("/health", ctx -> {
+        ctx.json(Map.of(
+            "status", "UP", 
+            "timestamp", System.currentTimeMillis()
+        ));
+      });
 
       // Start server
-      server.start();
-      logger.info("Server started successfully on port {}", port);
-      logger.info("Hello World endpoint: http://localhost:{}/hello", port);
-      logger.info("Stock endpoint: http://localhost:{}/stock", port);
-      logger.info("Health check endpoint: http://localhost:{}/health", port);
-      logger.info("Try: http://localhost:{}/hello?name=YourName", port);
-
-      // Wait for server to be stopped
-      server.join();
+      app.start(port);
+      LOGGER.info("Server started successfully on port {}", port);
+      LOGGER.info("Hello World endpoint: http://localhost:{}/hello", port);
+      LOGGER.info("Stock endpoint: http://localhost:{}/stock-info", port);
+      LOGGER.info("Health check endpoint: http://localhost:{}/health", port);
+      LOGGER.info("Try: http://localhost:{}/hello?name=YourName", port);
 
     } catch (Exception e) {
-      logger.error("Failed to start application", e);
+      LOGGER.error("Failed to start application", e);
       System.exit(1);
     }
   }
@@ -70,24 +79,11 @@ public class Main {
       try {
         return Integer.parseInt(portStr.trim());
       } catch (NumberFormatException e) {
-        logger.warn("Invalid PORT environment variable: {}. Using default port {}",
+        LOGGER.warn("Invalid PORT environment variable: {}. Using default port {}",
             portStr, DEFAULT_PORT);
       }
     }
     return DEFAULT_PORT;
   }
 
-  /**
-   * Simple health check servlet
-   */
-  private static class HealthServlet extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest req,
-        HttpServletResponse resp)
-        throws java.io.IOException {
-      resp.setContentType("application/json");
-      resp.setStatus(HttpServletResponse.SC_OK);
-      resp.getWriter().write("{\"status\":\"UP\",\"timestamp\":" + System.currentTimeMillis() + "}");
-    }
-  }
 }

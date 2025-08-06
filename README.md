@@ -101,7 +101,7 @@ src/
 
 2. **Stock Data endpoint:**
    ```bash
-   curl "http://localhost:8080/stock?symbol=AAPL"
+   curl "http://localhost:8080/stock-info?symbol=AAPL"
    ```
    Response:
    ```json
