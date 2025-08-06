@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class AlphaVantageStockService implements StockService {
 
-  private static final Logger logger = LoggerFactory.getLogger(AlphaVantageStockService.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AlphaVantageStockService.class);
 
   private static final String BASE_URL = "https://www.alphavantage.co/query";
   private static final String API_KEY = System.getenv("ALPHA_VANTAGE_API_KEY");
@@ -48,7 +48,7 @@ public class AlphaVantageStockService implements StockService {
     }
 
     if (API_KEY == null || API_KEY.trim().isEmpty()) {
-      logger.warn("Alpha Vantage API key not configured, returning mock data");
+      LOGGER.warn("Alpha Vantage API key not configured, returning mock data");
       return createMockStockInfo(symbol.toUpperCase());
     }
 
@@ -62,20 +62,20 @@ public class AlphaVantageStockService implements StockService {
           .GET()
           .build();
 
-      logger.info("Fetching stock data for symbol: {}", symbol);
+      LOGGER.info("Fetching stock data for symbol: {}", symbol);
 
       HttpResponse<String> response = httpClient.send(request,
           HttpResponse.BodyHandlers.ofString());
 
       if (response.statusCode() != 200) {
-        logger.error("API request failed with status: {}", response.statusCode());
+        LOGGER.error("API request failed with status: {}", response.statusCode());
         throw new RuntimeException("Failed to fetch stock data: HTTP " + response.statusCode());
       }
 
       return parseQuoteResponse(response.body(), symbol.toUpperCase());
 
     } catch (IOException | InterruptedException e) {
-      logger.error("Error fetching stock data for symbol: {}", symbol, e);
+      LOGGER.error("Error fetching stock data for symbol: {}", symbol, e);
       throw new RuntimeException("Failed to fetch stock data", e);
     }
   }
@@ -94,7 +94,7 @@ public class AlphaVantageStockService implements StockService {
 
         JsonNode note = root.get("Note");
         if (note != null) {
-          logger.warn("API rate limit reached: {}", note.asText());
+          LOGGER.warn("API rate limit reached: {}", note.asText());
           return createMockStockInfo(symbol);
         }
 
@@ -112,12 +112,12 @@ public class AlphaVantageStockService implements StockService {
       stockInfo.setChange(new BigDecimal(quote.get("09. change").asText()));
       stockInfo.setChangePercent(parseChangePercent(quote.get("10. change percent").asText()));
 
-      logger.info("Successfully parsed stock data for: {}", symbol);
+      LOGGER.info("Successfully parsed stock data for: {}", symbol);
       return stockInfo;
 
     } catch (Exception e) {
-      logger.error("Error parsing Alpha Vantage response for symbol: {}", symbol, e);
-      logger.debug("Response body: {}", jsonResponse);
+      LOGGER.error("Error parsing Alpha Vantage response for symbol: {}", symbol, e);
+      LOGGER.debug("Response body: {}", jsonResponse);
 
       // Return mock data as fallback
       return createMockStockInfo(symbol);
@@ -131,7 +131,7 @@ public class AlphaVantageStockService implements StockService {
   }
 
   private StockInfo createMockStockInfo(String symbol) {
-    logger.info("Creating mock stock data for symbol: {}", symbol);
+    LOGGER.info("Creating mock stock data for symbol: {}", symbol);
 
     StockInfo mockData = new StockInfo();
     mockData.setSymbol(symbol);
