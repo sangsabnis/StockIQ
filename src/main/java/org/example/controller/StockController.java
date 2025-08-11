@@ -7,6 +7,7 @@ import io.javalin.http.HttpStatus;
 import java.util.HashMap;
 import java.util.Map;
 import org.example.model.StockInfo;
+import org.example.model.StockOverview;
 import org.example.service.StockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,37 @@ public class StockController {
       LOGGER.error("Error fetching stock data for symbol: {}", symbol, e);
       sendErrorResponse(ctx, HttpStatus.INTERNAL_SERVER_ERROR,
           "Failed to fetch stock data. Please try again later.");
+    }
+  }
+
+  public void getStockOverview(Context ctx) {
+    String symbol = ctx.queryParam("symbol");
+
+    if (symbol == null || symbol.trim().isEmpty()) {
+      sendErrorResponse(ctx, HttpStatus.BAD_REQUEST, "Missing required parameter: symbol");
+      return;
+    }
+
+    LOGGER.info("Received stock overview request for symbol: {}", symbol);
+
+    try {
+      StockOverview stockOverview = stockService.getOverview(symbol.trim().toUpperCase());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("success", true);
+      response.put("data", stockOverview);
+
+      ctx.status(HttpStatus.OK).json(response);
+      LOGGER.info("Successfully returned stock overview for: {}", symbol);
+
+    } catch (IllegalArgumentException e) {
+      LOGGER.warn("Invalid request for symbol: {}, error: {}", symbol, e.getMessage());
+      sendErrorResponse(ctx, HttpStatus.BAD_REQUEST, e.getMessage());
+
+    } catch (Exception e) {
+      LOGGER.error("Error fetching stock overview for symbol: {}", symbol, e);
+      sendErrorResponse(ctx, HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to fetch stock overview. Please try again later.");
     }
   }
 
