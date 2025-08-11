@@ -49,6 +49,7 @@ public class Main {
       app.get("/hello", helloController::getHello);
 
       app.get("/stock-info", stockController::getStock);
+      app.get("/stock-overview", stockController::getStockOverview);
       app.post("/stock", stockController::postStock);
 
       // Health check endpoint
@@ -64,6 +65,7 @@ public class Main {
       LOGGER.info("Server started successfully on port {}", port);
       LOGGER.info("Hello World endpoint: http://localhost:{}/hello", port);
       LOGGER.info("Stock endpoint: http://localhost:{}/stock-info", port);
+      LOGGER.info("Stock overview endpoint: http://localhost:{}/stock-overview", port);
       LOGGER.info("Health check endpoint: http://localhost:{}/health", port);
       LOGGER.info("Try: http://localhost:{}/hello?name=YourName", port);
 
