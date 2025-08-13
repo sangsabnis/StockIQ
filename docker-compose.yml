@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: java-project-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_iq
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_pwd
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - postgres-network
+
+volumes:
+  postgres_data:
+
+networks:
+  postgres-network:
+    driver: bridge

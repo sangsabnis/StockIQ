@@ -5,12 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.model.StockInfo;
 import org.example.model.StockOverview;
+import org.example.repository.StockOverviewRepository;
 import org.example.service.impl.AlphaVantageStockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 /**
  * Unit tests for AlphaVantageStockService
@@ -18,10 +25,18 @@ import org.junit.jupiter.api.Test;
 class AlphaVantageStockServiceTest {
 
   private StockService stockService;
+  private StockOverviewRepository mockRepository;
 
   @BeforeEach
   void setUp() {
-    stockService = new AlphaVantageStockService();
+    // Create mocked dependencies
+    ObjectMapper objectMapper = new ObjectMapper();
+    mockRepository = mock(StockOverviewRepository.class);
+    
+    // Mock repository to always return empty (stale data) so we fetch from API
+    when(mockRepository.findBySymbolIfFresh(any(String.class))).thenReturn(Optional.empty());
+    
+    stockService = new AlphaVantageStockService(objectMapper, mockRepository);
   }
 
   @Test

@@ -2,6 +2,7 @@ package org.example.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import org.example.model.StockInfo;
 import org.example.model.StockOverview;
+import org.example.repository.StockOverviewRepository;
 import org.example.service.StockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +31,15 @@ public class AlphaVantageStockService implements StockService {
 
   private final HttpClient httpClient;
   private final ObjectMapper objectMapper;
+  private final StockOverviewRepository stockOverviewRepository;
 
-  public AlphaVantageStockService() {
+  @Inject
+  public AlphaVantageStockService(ObjectMapper objectMapper, StockOverviewRepository stockOverviewRepository) {
     this.httpClient = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10))
         .build();
-    this.objectMapper = new ObjectMapper();
+    this.objectMapper = objectMapper;
+    this.stockOverviewRepository = stockOverviewRepository;
   }
 
   @Override
@@ -81,15 +86,35 @@ public class AlphaVantageStockService implements StockService {
     if (symbol == null || symbol.trim().isEmpty()) {
       throw new IllegalArgumentException("Stock symbol cannot be null or empty");
     }
-
+    
+    String normalizedSymbol = symbol.trim().toUpperCase();
+    
+    // Check if we have fresh data in cache
+    var cachedOverview = stockOverviewRepository.findBySymbolIfFresh(normalizedSymbol);
+    if (cachedOverview.isPresent()) {
+      LOGGER.info("Returning cached stock overview for symbol: {}", normalizedSymbol);
+      return cachedOverview.get();
+    }
+    
+    // Fetch fresh data from API
+    StockOverview freshOverview = fetchOverviewFromApi(normalizedSymbol);
+    
+    // Save to cache
+    stockOverviewRepository.save(freshOverview);
+    LOGGER.info("Cached fresh stock overview for symbol: {}", normalizedSymbol);
+    
+    return freshOverview;
+  }
+  
+  private StockOverview fetchOverviewFromApi(String symbol) {
     if (API_KEY == null || API_KEY.trim().isEmpty()) {
       LOGGER.warn("Alpha Vantage API key not configured, returning mock data");
-      return createMockStockOverview(symbol.toUpperCase());
+      return createMockStockOverview(symbol);
     }
 
     try {
       String url = String.format("%s?function=OVERVIEW&symbol=%s&apikey=%s",
-          BASE_URL, symbol.toUpperCase(), API_KEY);
+          BASE_URL, symbol, API_KEY);
 
       HttpRequest request = HttpRequest.newBuilder()
           .uri(URI.create(url))
@@ -97,7 +122,7 @@ public class AlphaVantageStockService implements StockService {
           .GET()
           .build();
 
-      LOGGER.info("Fetching stock overview for symbol: {}", symbol);
+      LOGGER.info("Fetching stock overview from API for symbol: {}", symbol);
 
       HttpResponse<String> response = httpClient.send(request,
           HttpResponse.BodyHandlers.ofString());
@@ -108,7 +133,7 @@ public class AlphaVantageStockService implements StockService {
         throw new RuntimeException("Failed to fetch stock overview: HTTP " + response.statusCode());
       }
 
-      return parseOverviewResponse(response.body(), symbol.toUpperCase());
+      return parseOverviewResponse(response.body(), symbol);
 
     } catch (IOException | InterruptedException e) {
       LOGGER.error("Error fetching stock overview for symbol: {}", symbol, e);
